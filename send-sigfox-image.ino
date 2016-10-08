@@ -36,7 +36,7 @@
 #define COLOR_SETTING_JPEG 0x07
 
 ////#define COLOR_SETTING COLOR_SETTING_JPEG
-#define COLOR_SETTING COLOR_SETTING_4BIT_GRAYSCALE
+#define COLOR_SETTING COLOR_SETTING_8BIT_GRAYSCALE
 
 #define SNAPSHOT_SETTING_COMPRESSED 0  //  Compress the snapshot.
 #define SNAPSHOT_SETTING_UNCOMPRESSED 1  //  Don't compress the snapshot.
@@ -200,7 +200,7 @@ void Capture()
     if (readBytes((char *)resp, 6, 100) != 6) continue;
     if (resp[0] == 0xaa && resp[1] == (0x0e | cameraAddr) && resp[2] == 0x06 && resp[4] == 0 && resp[5] == 0) break; 
   }
-  ////  Send "Snapshot" command, package length.
+  ////  Send "Snapshot" command.
   cmd[1] = 0x05 | cameraAddr;
   cmd[2] = SNAPSHOT_SETTING;
   cmd[3] = 0;
@@ -246,6 +246,7 @@ void GetData()
   unsigned int pktCnt = (picTotalLen) / (PIC_PKT_LEN - 6); 
   if ((picTotalLen % (PIC_PKT_LEN-6)) != 0) pktCnt += 1;
   
+  ////  Send "ACK" command, package ID.
   char cmd[] = { (char) 0xaa, 0x0e | cameraAddr, 0x00, 0x00, 0x00, 0x00 };  
   unsigned char pkt[PIC_PKT_LEN];
   
