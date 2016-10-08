@@ -338,13 +338,42 @@ bool CameraC328R::getRawPicture( PictureType pictureType, byte pictureBuffer[], 
   if( !getPicture( pictureType, processDelay, pictureSize ) )
     return false;
 
-  if( pictureSize > bufferSize )
+  if( pictureSize > bufferSize ) {
+    bufferSize = pictureSize;  ////    
     return false;
+  }
   else 
     bufferSize = pictureSize;
 
   // Wait for the package
   if( waitForResponse( processDelay, pictureBuffer, pictureSize ) ) {
+    sendACK( RAW_ACK );
+    return true;
+  }
+
+  return false;
+}
+
+////  Same as above, but return a part of the picture from index start for count bytes.  Set count to actual number of bytes written.
+bool CameraC328R::getPartialRawPicture( PictureType pictureType, byte pictureBuffer[], uint16_t &bufferSize, uint16_t processDelay,
+  uint16_t start, uint16_t &count)
+{
+  uint16_t pictureSize = 0;
+
+Serial.println("z2");
+  if( !getPicture( pictureType, processDelay, pictureSize ) )
+    return false;
+Serial.println("z3");
+
+  if( pictureSize > bufferSize ) {
+    ////bufferSize = pictureSize;  ////    
+    ////return false;
+  }
+  else 
+    bufferSize = pictureSize;
+
+  //// Wait for the partial package
+  if( waitForPartialResponse( processDelay, pictureBuffer, pictureSize, start, count ) ) { ////
     sendACK( RAW_ACK );
     return true;
   }
@@ -412,6 +441,21 @@ bool CameraC328R::getPicture( PictureType pictureType, uint16_t processDelay, ui
  * @return True if got an ACK for the specified command, false otherwise
  */
 bool CameraC328R::waitForACK( uint32_t timeout, uint8_t cmdId )
+{
+  bool success = waitForResponse( timeout );
+
+  // TODO: We are ignoring NAKs here. Should we do something for this
+  // specific case?
+  if( success && _receive_cmd[1] == CMD_ACK && _receive_cmd[2] == cmdId )
+  {
+    return true;
+  }
+
+  return false;
+}
+
+////  Same as above but only wait up to count bytes.  This ensures that raw picture bytes do not get returned.
+bool CameraC328R::waitForACKLimit( uint32_t timeout, uint8_t cmdId, uint16_t count )
 {
   bool success = waitForResponse( timeout );
 
@@ -515,6 +559,44 @@ bool CameraC328R::waitForResponse( uint32_t timeout, byte buffer[], uint16_t buf
       byteCnt++;
 
       if( byteCnt == bufferLength )
+      {
+        return true;
+      }
+    }
+  }
+
+  if( byteCnt > 0 )
+  {
+    return true;
+  }
+
+  return false;
+}
+
+////  Same as above, but return a part of the picture from index start for count bytes.  Set count to actual number of bytes written.
+bool CameraC328R::waitForPartialResponse( uint32_t timeout, byte buffer[], uint16_t bufferLength,
+  uint16_t start, uint16_t &count)
+{
+  uint16_t byteCnt = 0;
+  unsigned long time = millis();
+  uint16_t bytesToCopy = count; count = 0; ////
+
+Serial.print("bufferLength:"); Serial.println(bufferLength); ////
+  while( millis() - time <= timeout )
+  {
+    while( serial_available() > 0 )
+    {
+      int b = serial_read();  ////
+      if (b < 0) continue;  ////  Retry if not ready.
+      if (byteCnt >= start && byteCnt < start + bytesToCopy)  ////
+      {
+        Serial.print(b, HEX); Serial.print(" ");
+        buffer[byteCnt - start] = (byte) b;  ////
+        count++;  ////
+      }
+      byteCnt++;
+
+      if( byteCnt >= bufferLength )
       {
         return true;
       }
