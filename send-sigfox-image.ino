@@ -27,7 +27,7 @@ void getJPEGPicture_callback( uint16_t pictureSize, uint16_t packageSize,
 }
 
 void debug(String s) {
-  return; //
+  //return; //
   Serial.println(s);
 }
 
@@ -40,7 +40,10 @@ void setup()
   //digitalWrite( LED_PIN, LOW );
 }
 
-void loop()
+const uint16_t pictureBufferSize = 800;
+byte pictureBuffer[pictureBufferSize];
+
+void processImage()
 {
   ////if( Serial.available() )
   {
@@ -54,18 +57,20 @@ void loop()
       return;
     }    
     debug("initial");
-    if( !camera.initial( CameraC328R::CT_GRAYSCALE_4, CameraC328R::PR_160x120,
-      CameraC328R::JR_160x128 ) )
+    if( !camera.initial( CameraC328R::CT_GRAYSCALE_2, CameraC328R::PR_80x60,
+      CameraC328R::JR_80x64 ) )
     {
       Serial.println( "Initial failed." );
       return;
     }
+#if NOTUSED  ////
     debug("setPackageSize");
     if( !camera.setPackageSize( 64 ) )
     {
       Serial.println( "Package size failed." );
       return;
     }
+#endif  ////
     debug("setLightFrequency");
     if( !camera.setLightFrequency( CameraC328R::FT_50Hz ) )
     {
@@ -73,12 +78,14 @@ void loop()
       return;
     }
     debug("snapshot");
-    if( !camera.snapshot( CameraC328R::ST_COMPRESSED, 0 ) )
+    ////if( !camera.snapshot( CameraC328R::ST_COMPRESSED, 0 ) )
+    if( !camera.snapshot( CameraC328R::ST_UNCOMPRESSED, 0 ) )  ////
     {
       Serial.println( "Snapshot failed." );
       return;
     }
     pictureSizeCount = 0;
+#if NOTUSED  ////
     debug("getJPEGPicture");
     if( !camera.getJPEGPicture( CameraC328R::PT_JPEG, PROCESS_DELAY,
       &getJPEGPicture_callback ) )
@@ -86,7 +93,54 @@ void loop()
       Serial.println( "Get JPEG failed." );
       return;
     }
-  }
-  
+#endif ////  NOTUSED    
+
+    ////  Get uncompressed picture.
+    uint16_t bufferSize = pictureBufferSize;
+    uint16_t start = 0;
+    uint16_t count = pictureBufferSize;
+    memset(pictureBuffer, 0, pictureBufferSize);
+
+    byte req[] = {0xaa, 0x04, 0x01, 0x00, 0x00, 0x00};
+    mySerial.write(req, sizeof(req));
+    int i = 0;
+    for (;;)
+    {
+      int bytesRead = mySerial.readBytes(pictureBuffer, pictureBufferSize);
+      for (int j = 0; j < bytesRead; j++)
+      {
+        byte b = pictureBuffer[j];
+        /*
+        int b = mySerial.read();  ////
+        if (b < 0) continue;  ////  Retry if not ready.
+        */        
+        if (b <= 15) Serial.print("0");
+        Serial.print(b, HEX); Serial.print(" ");         
+        i++;
+        if (i % 20 == 0) {
+          Serial.println("");   
+          Serial.print(i);   
+          Serial.print(": ");   
+        }
+      }
+      Serial.print(".");
+    }
+    return;
+    
+    if (!camera.getPartialRawPicture(CameraC328R::PT_SNAPSHOT, (byte *) pictureBuffer, bufferSize, PROCESS_DELAY, start, count))
+    {
+      Serial.print( "Get raw picture failed. bufferSize: " );
+      Serial.println(bufferSize);
+      String s = "count="; s.concat(count); debug(s);
+      Serial.write(pictureBuffer, count);     
+      return;      
+    }
+    String s = "count="; s.concat(count); debug(s);
+    Serial.write(pictureBuffer, count);     
+  }  
+}
+
+void loop() {
+  processImage();
   for(;;) {}  //  Stop here.
 }
