@@ -130,6 +130,7 @@ class CameraC328R
     bool getJPEGPicture( PictureType, uint16_t, void (*)(uint16_t, uint16_t, uint16_t, byte*) );
     bool setBaudRate( BaudRate );
     bool getRawPicture( PictureType, byte[], uint16_t&, uint16_t );
+    bool getPartialRawPicture( PictureType pictureType, byte pictureBuffer[], uint16_t &bufferSize, uint16_t processDelay, uint16_t start, uint16_t &count); ////
 
   private:
 	  SoftwareSerial *_serialPort;
@@ -139,6 +140,7 @@ class CameraC328R
     void createCommand( const byte, byte, byte, byte, byte );
     void sendCommand();
     bool waitForResponse( uint32_t, byte[], uint16_t );
+    bool waitForPartialResponse( uint32_t timeout, byte buffer[], uint16_t bufferLength, uint16_t start, uint16_t &count);  ////
     bool waitForResponse( uint32_t );
     bool waitForACK( uint32_t, uint8_t );
     void sendACK( const byte, uint16_t );
