@@ -101,12 +101,17 @@ void processImage()
     uint16_t count = pictureBufferSize;
     memset(pictureBuffer, 0, pictureBufferSize);
 
+    if (mySerial.overflow()) Serial.println("SoftwareSerial overflow 1!"); 
+    mySerial.listen();
     byte req[] = {0xaa, 0x04, 0x01, 0x00, 0x00, 0x00};
     mySerial.write(req, sizeof(req));
     int i = 0;
     for (;;)
     {
+      if (mySerial.overflow()) Serial.println("SoftwareSerial overflow 2!"); 
       int bytesRead = mySerial.readBytes(pictureBuffer, pictureBufferSize);
+      if (mySerial.overflow()) Serial.println("SoftwareSerial overflow 3!"); 
+      
       for (int j = 0; j < bytesRead; j++)
       {
         byte b = pictureBuffer[j];
