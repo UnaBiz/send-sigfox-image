@@ -1,3 +1,5 @@
+//  Driver for Grove Serial Camera. Not all commands below are supported for Grove Serial Camera.
+//  Based on "LCF OV528 Protocol.pdf" and code from http://store.fut-electronics.com/products/ttl-serial-jpeg-camera-for-arduino-video-motion-detection-infrared-lenses
 /**
  * Copyright 2009
  * Sean Voisen <http://gizmologi.st>
@@ -34,8 +36,8 @@
 // How long to wait for serial communication responses
 #define RESPONSE_DELAY 100
 
-// How long to wait for camera to process JPEG data
-#define PROCESS_DELAY 1000
+// How long to wait for camera to process JPEG data.  Recommended by LCF OV528 doc.
+#define PROCESS_DELAY 5000
 
 // How long to wait between data packages
 #define PACKAGE_DELAY 10
@@ -129,8 +131,8 @@ class CameraC328R
     bool snapshot( SnapshotType, uint16_t );
     bool getJPEGPicture( PictureType, uint16_t, void (*)(uint16_t, uint16_t, uint16_t, byte*) );
     bool setBaudRate( BaudRate );
-    bool getRawPicture( PictureType, byte[], uint16_t&, uint16_t );
-    bool getPartialRawPicture( PictureType pictureType, byte pictureBuffer[], uint16_t &bufferSize, uint16_t processDelay, uint16_t start, uint16_t &count); ////
+    ////bool getRawPicture( PictureType, byte[], uint16_t&, uint16_t );
+    ////bool getPartialRawPicture( PictureType pictureType, byte pictureBuffer[], uint16_t &bufferSize, uint16_t processDelay, uint16_t start, uint16_t &count); ////
 
   private:
 	  SoftwareSerial *_serialPort;
@@ -140,7 +142,6 @@ class CameraC328R
     void createCommand( const byte, byte, byte, byte, byte );
     void sendCommand();
     bool waitForResponse( uint32_t, byte[], uint16_t );
-    bool waitForPartialResponse( uint32_t timeout, byte buffer[], uint16_t bufferLength, uint16_t start, uint16_t &count);  ////
     bool waitForResponse( uint32_t );
     bool waitForACK( uint32_t, uint8_t );
     void sendACK( const byte, uint16_t );

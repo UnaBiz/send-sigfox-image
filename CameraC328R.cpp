@@ -1,3 +1,5 @@
+//  Driver for Grove Serial Camera. Not all commands below are supported for Grove Serial Camera.
+//  Based on "LCF OV528 Protocol.pdf" and code from http://store.fut-electronics.com/products/ttl-serial-jpeg-camera-for-arduino-video-motion-detection-infrared-lenses
 /**
  * Copyright 2009 
  * Sean Voisen <http://gizmologi.st>
@@ -47,6 +49,10 @@ static const byte RAW_ACK = 0x0A;
  * Methods
  *****************************************************************************/
 
+static void debug(String s) {
+  Serial.println(s);
+}
+
 /**
  * Constructor.
  */
@@ -65,6 +71,7 @@ CameraC328R::CameraC328R(SoftwareSerial *softSerial)
  */
 bool CameraC328R::sync()
 {
+  debug("CameraC328R::sync");
   uint8_t attempts = 0;
   bool success;
   
@@ -119,6 +126,7 @@ bool CameraC328R::sync()
  */
 bool CameraC328R::initial( ColorType colorType, PreviewResolution previewResolution, JPEGResolution jpegResolution )
 {
+  debug("CameraC328R::initial");
   createCommand( CMD_INITIAL, 0, colorType, previewResolution, jpegResolution );
   sendCommand();
 
@@ -140,6 +148,7 @@ bool CameraC328R::initial( ColorType colorType, PreviewResolution previewResolut
  */
 bool CameraC328R::setLightFrequency( FrequencyType frequencyType )
 {
+  debug("CameraC328R::setLightFrequency");
   createCommand( CMD_LIGHTFREQ, (byte)frequencyType, 0, 0, 0 );
   sendCommand();
 
@@ -161,6 +170,7 @@ bool CameraC328R::setLightFrequency( FrequencyType frequencyType )
  */
 bool CameraC328R::setPackageSize( uint16_t size )
 {
+  debug("CameraC328R::setPackageSize");
   createCommand( CMD_PACKAGESIZE, 0x08, (byte)(size & 0xFF), (byte)(size >> 8), 0 );
   sendCommand();
 
@@ -188,6 +198,7 @@ bool CameraC328R::setPackageSize( uint16_t size )
  */
 bool CameraC328R::snapshot( SnapshotType snapshotType, uint16_t skipFrames )
 {
+  debug("CameraC328R::snapshot");
   createCommand( CMD_SNAPSHOT, snapshotType, (byte)(skipFrames & 0xFF), (byte)(skipFrames >> 8), 0 ); 
   sendCommand();
 
@@ -218,6 +229,7 @@ bool CameraC328R::snapshot( SnapshotType snapshotType, uint16_t skipFrames )
  */
 bool CameraC328R::getJPEGPicture( PictureType pictureType, uint16_t processDelay, void (*callback)( uint16_t picSize, uint16_t packPicDataSize, uint16_t packCount, byte* pack ) )
 {
+  debug("CameraC328R::getJPEGPicture");
   uint16_t pictureSize = 0;
 
   if( !getPicture( pictureType, processDelay, pictureSize ) )
@@ -290,6 +302,7 @@ bool CameraC328R::getJPEGPicture( PictureType pictureType, uint16_t processDelay
  */
 bool CameraC328R::reset( bool completeReset )
 {
+  debug("CameraC328R::reset");
   createCommand( CMD_RESET, completeReset ? 0x00 : 0x01, 0, 0, 0xFF );
   sendCommand();
 
@@ -312,6 +325,7 @@ bool CameraC328R::reset( bool completeReset )
  */
 bool CameraC328R::setBaudRate( BaudRate baudRate )
 {
+  debug("CameraC328R::setBaudRate");
   createCommand( CMD_BAUDRATE, (byte)baudRate, 0x01, 0, 0 );
   sendCommand();
 
@@ -323,6 +337,7 @@ bool CameraC328R::setBaudRate( BaudRate baudRate )
   return false;
 }
 
+#if NOTUSED  ////  Raw mode not supported for Grove Serial Camera.
 /**
  * Gets a raw, uncompressed photo from the camera. Unlike getJPEGPicture,
  * this method returns the ENTIRE photo in one large data package. This
@@ -333,6 +348,7 @@ bool CameraC328R::setBaudRate( BaudRate baudRate )
  */
 bool CameraC328R::getRawPicture( PictureType pictureType, byte pictureBuffer[], uint16_t &bufferSize, uint16_t processDelay )
 {
+  debug("CameraC328R::getRawPicture");
   uint16_t pictureSize = 0;
 
   if( !getPicture( pictureType, processDelay, pictureSize ) )
@@ -380,6 +396,7 @@ Serial.println("z3");
 
   return false;
 }
+#endif  ////  NOTUSED
 
 /**
  * Power off the camera. The camera will be unusable after calling
@@ -580,44 +597,6 @@ bool CameraC328R::waitForResponse( uint32_t timeout, byte buffer[], uint16_t buf
       byteCnt++;
 
       if( byteCnt == bufferLength )
-      {
-        return true;
-      }
-    }
-  }
-
-  if( byteCnt > 0 )
-  {
-    return true;
-  }
-
-  return false;
-}
-
-////  Same as above, but return a part of the picture from index start for count bytes.  Set count to actual number of bytes written.
-bool CameraC328R::waitForPartialResponse( uint32_t timeout, byte buffer[], uint16_t bufferLength,
-  uint16_t start, uint16_t &count)
-{
-  uint16_t byteCnt = 0;
-  unsigned long time = millis();
-  uint16_t bytesToCopy = count; count = 0; ////
-
-Serial.print("bufferLength:"); Serial.println(bufferLength); ////
-  while( millis() - time <= timeout )
-  {
-    while( serial_available() > 0 )
-    {
-      int b = serial_read();  ////
-      if (b < 0) continue;  ////  Retry if not ready.
-      if (byteCnt >= start && byteCnt < start + bytesToCopy)  ////
-      {
-        Serial.print(b, HEX); Serial.print(" ");
-        buffer[byteCnt - start] = (byte) b;  ////
-        count++;  ////
-      }
-      byteCnt++;
-
-      if( byteCnt >= bufferLength )
       {
         return true;
       }

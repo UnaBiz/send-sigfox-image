@@ -1,3 +1,4 @@
+//  Sketch for Processing IDE to read serial output from send_sigfox_image and render image.
 import processing.serial.*;
 
 Serial myPort;
