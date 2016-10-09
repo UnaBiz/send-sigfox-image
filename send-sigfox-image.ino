@@ -24,11 +24,47 @@ void getJPEGPicture_callback( uint16_t pictureSize, uint16_t packageSize,
     //digitalWrite( LED_PIN, LOW );
     Serial.flush();
   }
+  debug("\n\n");
 }
 
 void debug(String s) {
   //return; //
   Serial.println(s);
+}
+
+const uint16_t pictureBufferSize = 800;
+byte pictureBuffer[pictureBufferSize];
+
+void reset()
+{
+    byte cmd[] = {0xaa, 0x08, 0x00, 0x00, 0x00, 0x00};
+    mySerial.write(cmd, sizeof(cmd));
+    /*
+    int i = 0;
+    for (;;)
+    {
+      if (mySerial.overflow()) Serial.println("SoftwareSerial overflow 2!"); 
+      int bytesRead = mySerial.readBytes(pictureBuffer, pictureBufferSize);
+      if (mySerial.overflow()) Serial.println("SoftwareSerial overflow 3!"); 
+      
+      for (int j = 0; j < bytesRead; j++)
+      {
+        byte b = pictureBuffer[j];
+        //int b = mySerial.read();  ////
+        //if (b < 0) continue;  ////  Retry if not ready.
+        if (b <= 15) Serial.print("0");
+        Serial.print(b, HEX); Serial.print(" ");         
+        i++;
+        if (i % 20 == 0) {
+          Serial.println("");   
+          Serial.print(i);   
+          Serial.print(": ");   
+        }
+      }
+      Serial.print(".");
+      ////mySerial.write(ack, sizeof(ack));
+    }  
+    */
 }
 
 void setup()
@@ -38,10 +74,21 @@ void setup()
   mySerial.begin(CAMERA_BAUD);
   //pinMode( LED_PIN, OUTPUT );
   //digitalWrite( LED_PIN, LOW );
-}
 
-const uint16_t pictureBufferSize = 800;
-byte pictureBuffer[pictureBufferSize];
+  debug("sync reset");
+  if( !camera.sync() )
+  {
+    Serial.println( "Sync failed." );
+    return;
+  }    
+  if( !camera.reset(true) )
+  {
+    Serial.println( "reset failed." );
+    return;
+  }    
+  //reset(); 
+  delay(1000); mySerial.begin(CAMERA_BAUD);
+}
 
 void processImage()
 {
@@ -57,8 +104,8 @@ void processImage()
       return;
     }    
     debug("initial");
-    if( !camera.initial( CameraC328R::CT_GRAYSCALE_2, CameraC328R::PR_80x60,
-      CameraC328R::JR_80x64 ) )
+    ////if( !camera.initial( CameraC328R::CT_GRAYSCALE_2, CameraC328R::PR_80x60, CameraC328R::JR_80x64 ) )
+    if( !camera.initial( (CameraC328R::ColorType) 7, (CameraC328R::PreviewResolution) 1, (CameraC328R::JPEGResolution) 1 ) )
     {
       Serial.println( "Initial failed." );
       return;
@@ -70,30 +117,32 @@ void processImage()
       Serial.println( "Package size failed." );
       return;
     }
-#endif  ////
     debug("setLightFrequency");
     if( !camera.setLightFrequency( CameraC328R::FT_50Hz ) )
     {
       Serial.println( "Light frequency failed." );
       return;
     }
+#endif  ////
     debug("snapshot");
-    ////if( !camera.snapshot( CameraC328R::ST_COMPRESSED, 0 ) )
-    if( !camera.snapshot( CameraC328R::ST_UNCOMPRESSED, 0 ) )  ////
+    if( !camera.snapshot( CameraC328R::ST_COMPRESSED, 0 ) )
+    ////if( !camera.snapshot( CameraC328R::ST_UNCOMPRESSED, 0 ) )  ////
     {
       Serial.println( "Snapshot failed." );
       return;
     }
     pictureSizeCount = 0;
-#if NOTUSED  ////
+//#if NOTUSED  ////
     debug("getJPEGPicture");
-    if( !camera.getJPEGPicture( CameraC328R::PT_JPEG, PROCESS_DELAY,
-      &getJPEGPicture_callback ) )
+    //if( !camera.getJPEGPicture( CameraC328R::PT_JPEG, PROCESS_DELAY, &getJPEGPicture_callback ) )
+    if( !camera.getJPEGPicture((CameraC328R::PictureType) 5, 5000, &getJPEGPicture_callback ) )
     {
       Serial.println( "Get JPEG failed." );
       return;
     }
-#endif ////  NOTUSED    
+//#endif ////  NOTUSED    
+
+return;
 
     ////  Get uncompressed picture.
     uint16_t bufferSize = pictureBufferSize;
@@ -103,9 +152,34 @@ void processImage()
 
     if (mySerial.overflow()) Serial.println("SoftwareSerial overflow 1!"); 
     mySerial.listen();
-    byte req[] = {0xaa, 0x04, 0x01, 0x00, 0x00, 0x00};
+    //byte req[] = {0xaa, 0x04, 0x01, 0x00, 0x00, 0x00};
+    byte req[] = {0xaa, 0x04, 0x02, 0x00, 0x00, 0x00};
+    byte ack[] = {0xaa, 0x0e, 0x00, 0x00, 0x00, 0x00};
     mySerial.write(req, sizeof(req));
+
     int i = 0;
+    
+    /*
+    for(;;)
+    {
+      while(mySerial.available() < 7);
+      while(mySerial.available() > 0){
+        int b = mySerial.read();  ////
+        if (b < 0) continue;  ////  Retry if not ready.
+        if (b <= 15) Serial.print("0");
+        Serial.print(b, HEX); Serial.print(" ");         
+        i++;
+        if (i % 20 == 0) {
+          Serial.println("");   
+          Serial.print(i);   
+          Serial.print(": ");   
+        }
+      }
+      Serial.print(",");
+      delay(50);      
+    }
+    */
+
     for (;;)
     {
       if (mySerial.overflow()) Serial.println("SoftwareSerial overflow 2!"); 
@@ -129,6 +203,7 @@ void processImage()
         }
       }
       Serial.print(".");
+      //mySerial.write(ack, sizeof(ack));
     }
     return;
     
