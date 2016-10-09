@@ -4,5 +4,4 @@
 
 #ifdef ARDUINO  ////
 #else  ////  ARDUINO
-#define USE_SD_CARD
 #endif  ////  ARDUINO

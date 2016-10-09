@@ -1,6 +1,7 @@
 //  Test program for JPEGDecoder, to be run on desktop.
 #ifndef ARDUINO
 //#include <iostream>
+#include <stdio.h>
 #include "../JPEGDecoder.h"
 
 int main() {
@@ -57,7 +58,7 @@ int main() {
                     }else{ // RGB
 
                         sprintf(str,"#RGB,%d,%d,%u,%u,%u", x, y, pImg[0], pImg[1], pImg[2]);
-                        //puts(str);
+                        puts(str);
                     }
                 }
                 pImg += JpegDec.comps ;

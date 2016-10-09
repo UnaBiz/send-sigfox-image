@@ -11,12 +11,10 @@
 #include "User_Config.h"
 
 #ifdef ARDUINO  ////
-#include "Arduino.h"
+  #include <Arduino.h>
 #else  ////  ARDUINO
-#include <stdio.h> ////
-#include <string.h> ////
-#include <stdint.h> ////
-typedef FILE *File; ////
+  #include <string.h> ////
+  #include <stdint.h> ////
 #endif  ////  ARDUINO
 
 #ifdef USE_SD_CARD
@@ -25,11 +23,13 @@ typedef FILE *File; ////
   #else
     ////#include <SdFat.h>
   #endif
-#endif
+#else  //  USE_SD_CARD
+  #include "CameraReader.h"
+#endif  //  USE_SD_CARD
 
 #include "picojpeg.h"
 
-#define DEBUG
+//#define DEBUG
 
 //------------------------------------------------------------------------------
 #ifndef max
@@ -49,7 +49,9 @@ private:
 
 #ifdef USE_SD_CARD
     File g_pInFile;
-#endif
+#else  //  USE_SD_CARD
+    CameraReader g_pInFile;
+#endif  //  USE_SD_CARD
     pjpeg_scan_type_t scan_type;
     pjpeg_image_info_t image_info;
     

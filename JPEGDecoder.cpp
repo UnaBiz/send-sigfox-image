@@ -9,11 +9,7 @@
 
 */
 
-#ifdef ARDUINO  ////
-#else  ////  ARDUINO
-#include <sys/stat.h> ////
-#endif  ////  ARDUINO
-
+#include <stdio.h>
 #include "JPEGDecoder.h"
 #include "picojpeg.h"
 
@@ -88,14 +84,7 @@ unsigned char JPEGDecoder::pjpeg_need_bytes_callback(unsigned char* pBuf, unsign
       #endif
       //Serial.println(pBuf[i],HEX);
     }
-#ifdef USE_SD_CARD
-#ifdef ARDUINO  ////
     else g_pInFile.read(pBuf,n);
-#else
-    else fread(pBuf, 1, n, g_pInFile); ////
-    printf("pjpeg_need_bytes_callback: %d\n", n);
-#endif  ////  ARDUINO
-#endif
     *pBytes_actually_read = (unsigned char)(n);
     g_nInFileOfs += n;
     return 0;
@@ -111,17 +100,10 @@ int JPEGDecoder::decode_mcu(void){
         mcu_y = 0;       // <<<<<< Added to correct 2nd image bug
         ////delete pImage;   // <<<<<< Added to correct memory leak bug
         deallocateMemory();  ////
-#ifdef USE_SD_CARD
-#ifdef ARDUINO  ////
         g_pInFile.close();
-#else
-        fclose(g_pInFile);  ////
-#endif  ////  ARDUINO
-
-#endif
         if (status != PJPG_NO_MORE_BLOCKS)
         {
-            #ifdef DEBUG
+#ifdef DEBUG
 #ifdef ARDUINO  ////
             Serial.print("pjpeg_decode_mcu() failed with status ");
             Serial.println(status);
@@ -129,7 +111,7 @@ int JPEGDecoder::decode_mcu(void){
             printf("pjpeg_decode_mcu() failed with status ");  ////
             printf("%d\n", status);  ////
 #endif  ////  ARDUINO
-            #endif
+#endif  ////  DEBUG
             
             ////delete pImage;
             deallocateMemory();  ////
@@ -151,14 +133,7 @@ int JPEGDecoder::read(void)
     {
         ////delete pImage;
         deallocateMemory();  ////
-#ifdef USE_SD_CARD
-
-#ifdef ARDUINO  ////
         g_pInFile.close();
-#else  ////  ARDUINO
-        fclose(g_pInFile);  ////
-#endif  ////  ARDUINO
-#endif
         return 0;
     }
 
@@ -256,29 +231,16 @@ int JPEGDecoder::decodeArray(const uint8_t array[], uint32_t  array_size, unsign
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 int JPEGDecoder::decodeFile(char* pFilename){
-#ifdef USE_SD_CARD
     array_jpg = 0;
-
-#ifdef ARDUINO  ////
+    #ifdef USE_SD_CARD
     g_pInFile = SD.open(pFilename, FILE_READ);
-#else  ////  ARDUINO
-    g_pInFile = fopen(pFilename, "rb");  ////
-#endif  ////  ARDUINO
-    if (!g_pInFile)
-        return -1;
-
+    if (!g_pInFile) return -1;
+    #else  ////  USE_SD_CARD
+    if (!g_pInFile.open(pFilename)) return -1;
+    #endif  ////  USE_SD_CARD
     g_nInFileOfs = 0;
-
-#ifdef ARDUINO  ////
     g_nInFileSize = g_pInFile.size();
-#else  ////  ARDUINO
-    struct stat st; stat(pFilename, &st); g_nInFileSize = st.st_size; ////
-#endif  ////  ARDUINO
-
     return decodeCommon();
-#else
-    return 0;
-#endif
 }
 
 
@@ -301,7 +263,7 @@ int JPEGDecoder::decodeCommon(void) {
             
     if (status)
     {
-        #ifdef DEBUG
+#ifdef DEBUG
 #ifdef ARDUINO  ////
         Serial.print("pjpeg_decode_init() failed with status ");
         Serial.println(status);
@@ -311,8 +273,7 @@ int JPEGDecoder::decodeCommon(void) {
         printf("%d\n", status);  ////
         if (status == PJPG_UNSUPPORTED_MODE) puts("Progressive JPEG files are not supported.");  ////
 #endif  ////  ARDUINO
-
-        #endif
+#endif  ////  DEBUG
 
         return -1;
     }
@@ -361,12 +322,9 @@ void JPEGDecoder::abort(void){
     ////delete pImage;
     deallocateMemory();  ////
 #ifdef USE_SD_CARD
-#ifdef ARDUINO  ////
     if (g_pInFile) g_pInFile.close();
-#else  ////  ARDUINO
-    fclose(g_pInFile);  ////
-#endif  ////  ARDUINO
-#endif
+#else  ////  USE_SD_CARD
+    g_pInFile.close();
+#endif  ////  USE_SD_CARD
 }
-
 
