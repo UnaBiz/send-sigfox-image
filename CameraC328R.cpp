@@ -444,6 +444,16 @@ bool CameraC328R::waitForACK( uint32_t timeout, uint8_t cmdId )
 {
   bool success = waitForResponse( timeout );
 
+  ////
+  Serial.print("<< ");
+  for( int i = 0; i < CMD_SIZE; i++ )
+  {
+    int b = _receive_cmd[i]; ////
+    if (b <= 15) Serial.print("0"); ////
+    Serial.print(b, HEX); Serial.print(" "); ////         
+  }
+  Serial.println(""); ////
+
   // TODO: We are ignoring NAKs here. Should we do something for this
   // specific case?
   if( success && _receive_cmd[1] == CMD_ACK && _receive_cmd[2] == cmdId )
@@ -455,6 +465,7 @@ bool CameraC328R::waitForACK( uint32_t timeout, uint8_t cmdId )
 }
 
 ////  Same as above but only wait up to count bytes.  This ensures that raw picture bytes do not get returned.
+/*
 bool CameraC328R::waitForACKLimit( uint32_t timeout, uint8_t cmdId, uint16_t count )
 {
   bool success = waitForResponse( timeout );
@@ -468,6 +479,7 @@ bool CameraC328R::waitForACKLimit( uint32_t timeout, uint8_t cmdId, uint16_t cou
 
   return false;
 }
+*/
 
 /**
  * @private
@@ -477,11 +489,20 @@ bool CameraC328R::waitForACKLimit( uint32_t timeout, uint8_t cmdId, uint16_t cou
 void CameraC328R::sendCommand()
 {
   uint8_t i;
-
   for( i = 0; i < CMD_SIZE; i++ )
   {
     serial_print( _command[i] );
   }
+
+  ////
+  Serial.print(">> ");  ////
+  for( i = 0; i < CMD_SIZE; i++ )
+  {
+    int b = _command[i]; ////
+    if (b <= 15) Serial.print("0"); ////
+    Serial.print(b, HEX); Serial.print(" "); ////         
+  }
+  Serial.println(""); ////
 }
 
 /**
