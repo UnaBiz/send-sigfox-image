@@ -4,9 +4,9 @@
 #include <SoftwareSerial.h>
 #include "CameraC328R.h"
 
-#define PAGE_SIZE 64
+#define PAGE_SIZE 64  //  Size of packets to be sent by camera.
 #define USB_BAUD 9600
-#define CAMERA_BAUD 9600
+#define CAMERA_BAUD 9600  //  Doesn't work when using a higher baud.
 
 SoftwareSerial mySerial(2, 3);  //(rx, tx): Connect Grove Serial Camera to this rx/tx port (11-13 is used by sd shield)
 CameraC328R camera(&mySerial);
@@ -25,7 +25,7 @@ static void outputData(byte* data, uint16_t len) {
     if (b <= 15) Serial.print("0"); ////
     Serial.print(b, HEX); Serial.print(" "); ////
   }
-  Serial.println("]]]");  //  render_image watches for this marker.
+  Serial.println("]]]");  //  render_image watches for this marker to save the JPEG image.
 }
 
 void getJPEGPicture_callback( uint16_t pictureSize, uint16_t packageSize,
@@ -41,9 +41,6 @@ void getJPEGPicture_callback( uint16_t pictureSize, uint16_t packageSize,
     Serial.flush();
   }
 }
-
-//const uint16_t pictureBufferSize = 800;
-//byte pictureBuffer[pictureBufferSize];
 
 void setup()
 {
@@ -68,10 +65,9 @@ bool captureImage()
   //  Sync the camera before sending commands.
   if( !camera.sync() ) { Serial.println( "Sync failed." ); return false; }   
    
-  ////if( !camera.initial( CameraC328R::CT_GRAYSCALE_2, CameraC328R::PR_80x60, CameraC328R::JR_80x64 ) )
   //  Init camera for colour capture at 320x420 resolution.  Only colour not grayscale supported on Grove Serial Camera.
-  if( !camera.initial( (CameraC328R::ColorType) 7, (CameraC328R::PreviewResolution) 3, 
-    (CameraC328R::JPEGResolution) 3 )) { Serial.println( "Initial failed." ); return false; }
+  if( !camera.initial( CameraC328R::CT_JPEG, CameraC328R::PR_160x120, 
+    CameraC328R::JR_160x128 )) { Serial.println( "Initial failed." ); return false; }
     
   //  Tell camera to send images in packets of 64 bytes.
   if( !camera.setPackageSize( PAGE_SIZE )) { Serial.println( "Package size failed." ); return false; }
@@ -84,11 +80,10 @@ bool captureImage()
 
   //  Tell render_image we are sending a JPEG.
   Serial.println("[[[ BEGIN JPEG ]]]");
+  pictureSizeCount = 0;
   
   //  Read in the JPEG compressed image, packet by packet.  Only JPEG preview picture mode supported on Grove Serial Camnera.
-  pictureSizeCount = 0;
-  //if( !camera.getJPEGPicture( CameraC328R::PT_JPEG, PROCESS_DELAY, &getJPEGPicture_callback ) )
-  if( !camera.getJPEGPicture((CameraC328R::PictureType) 5, PROCESS_DELAY, 
+  if( !camera.getJPEGPicture( CameraC328R::PT_JPEG, PROCESS_DELAY, 
     &getJPEGPicture_callback )) { Serial.println( "Get JPEG failed." ); return false; }
 
   //  Tell render_image we have finished sending a JPEG.

@@ -80,6 +80,7 @@ unsigned char JPEGDecoder::pjpeg_need_bytes_callback(unsigned char* pBuf, unsign
     else g_pInFile.read(pBuf,n);
 #else
     else fread(pBuf, 1, n, g_pInFile); ////
+    printf("%d\n", n);
 #endif  ////  ARDUINO
 #endif
     *pBytes_actually_read = (unsigned char)(n);
