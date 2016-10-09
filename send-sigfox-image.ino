@@ -93,6 +93,7 @@ bool captureImage()
 
   //  Tell render_image we have finished sending a JPEG.
   Serial.println("[[[ END JPEG ]]]");
+  Serial.print("pictureSizeCount="); Serial.println(pictureSizeCount);  
 
   return true;
 }
