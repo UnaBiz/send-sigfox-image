@@ -33,7 +33,7 @@ unsigned int CameraReader::size() {
 #ifdef ARDUINO
     Serial.print("CameraReader::size "); Serial.print(fileSize); Serial.println(" bytes");
 #else  //  ARDUINO
-    struct stat st; stat(filename, &st); fileSize = (unsigned int) st.st_size;
+    struct stat st; stat(filename, &st); unsigned int fileSize = (unsigned int) st.st_size;
     printf("CameraReader::size %d bytes\n", fileSize);
 #endif  //  ARDUINO
     return fileSize;

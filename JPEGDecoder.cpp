@@ -17,22 +17,21 @@
 JPEGDecoder JpegDec;
 
 uint16_t *JPEGDecoder::allocateMemory() {  ////
-    uint16_t *pImage = new uint16_t[image_info.m_MCUWidth * image_info.m_MCUHeight];
+    int len = image_info.m_MCUWidth * image_info.m_MCUHeight;
+    uint16_t *pImage = new uint16_t[len];
+    int imageSize = sizeof(uint16_t) * len;
 #ifdef ARDUINO  ////
-    Serial.print("allocateMemory ");
-    Serial.print(2 * image_info.m_MCUWidth * image_info.m_MCUHeight);
-    Serial.print("bytes, width=");
-    Serial.print(image_info.m_MCUWidth);
-    Serial.print(",height=");
-    Serial.println(image_info.m_MCUHeight);
+    Serial.print("allocateMemory "); Serial.print(imageSize);
+    Serial.print("bytes, width="); Serial.print(image_info.m_MCUWidth);
+    Serial.print(", height="); Serial.println(image_info.m_MCUHeight);
     if (!pImage) Serial.println("Memory Allocation Failure");
 #else  ////  ARDUINO
-    printf("allocateMemory %d bytes, width=%d, height=%d\n", 2 * image_info.m_MCUWidth * image_info.m_MCUHeight, image_info.m_MCUWidth, image_info.m_MCUHeight);
+    printf("allocateMemory %d bytes, width=%d, height=%d\n", imageSize, image_info.m_MCUWidth, image_info.m_MCUHeight);
     printf("allocateMemory pImage=%x\n", pImage);
     if (!pImage) puts("Memory Allocation Failure");  ////
 #endif  ////  ARDUINO
     if (!pImage) return 0;
-    memset(pImage , 0 , sizeof(pImage));
+    memset(pImage, 0, imageSize);
     return pImage;
 }
 
@@ -40,7 +39,6 @@ void JPEGDecoder::deallocateMemory() {  ////
 #ifdef ARDUINO  ////
 #else  ////  ARDUINO
     printf("deallocateMemory pImage=%x\n", pImage);
-    if (!pImage) puts("Memory Allocation Failure");  ////
 #endif  ////  ARDUINO
     if (pImage == 0) return;
     delete pImage;
