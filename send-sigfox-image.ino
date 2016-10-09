@@ -12,23 +12,34 @@ SoftwareSerial mySerial(2, 3);  //(rx, tx): Connect Grove Serial Camera to this 
 CameraC328R camera(&mySerial);
 uint16_t pictureSizeCount = 0;
 
-//  This callback is called EVERY time a JPEG data packet is received.
+static void debug(String s) {
+  Serial.println(s);
+}
+
+static void outputData(byte* data, uint16_t len) {
+  //  Output the byte array to console for render_image to consume.
+  Serial.print("[[[ ");  //  render_image watches for this marker.
+  for( uint16_t i = 0; i < len; i++ )
+  {
+    int b = data[i];
+    if (b <= 15) Serial.print("0"); ////
+    Serial.print(b, HEX); Serial.print(" "); ////
+  }
+  Serial.println("]]]");  //  render_image watches for this marker.
+}
+
 void getJPEGPicture_callback( uint16_t pictureSize, uint16_t packageSize,
   uint16_t packageCount, byte* package )
 {
-  // packageSize is the size of the picture part of the package
+  //  This callback is called EVERY time a JPEG data packet is received.  We output the packet to render_image.
+  //  packageSize is the size of the picture part of the package
   pictureSizeCount += packageSize;
-  Serial.write(package,packageSize);
+  outputData(package, packageSize);
   if( pictureSizeCount >= pictureSize )
   {
     //digitalWrite( LED_PIN, LOW );
     Serial.flush();
   }
-  debug("\n\n");
-}
-
-static void debug(String s) {
-  Serial.println(s);
 }
 
 //const uint16_t pictureBufferSize = 800;
@@ -70,12 +81,18 @@ bool captureImage()
   
   //  Take a snaphot and keep in camera memory. Uncompressed mode not supported on Grove Serial Camera.
   if( !camera.snapshot( CameraC328R::ST_COMPRESSED, 0 )) { Serial.println( "Snapshot failed." ); return false; }
+
+  //  Tell render_image we are sending a JPEG.
+  Serial.println("[[[ BEGIN JPEG ]]]");
   
   //  Read in the JPEG compressed image, packet by packet.  Only JPEG preview picture mode supported on Grove Serial Camnera.
   pictureSizeCount = 0;
   //if( !camera.getJPEGPicture( CameraC328R::PT_JPEG, PROCESS_DELAY, &getJPEGPicture_callback ) )
   if( !camera.getJPEGPicture((CameraC328R::PictureType) 5, PROCESS_DELAY, 
     &getJPEGPicture_callback )) { Serial.println( "Get JPEG failed." ); return false; }
+
+  //  Tell render_image we have finished sending a JPEG.
+  Serial.println("[[[ END JPEG ]]]");
 
   return true;
 }
