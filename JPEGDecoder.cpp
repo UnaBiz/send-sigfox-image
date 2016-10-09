@@ -32,11 +32,23 @@ uint16_t *JPEGDecoder::allocateMemory() {  ////
     if (!pImage) Serial.println("Memory Allocation Failure");
 #else  ////  ARDUINO
     printf("allocateMemory %d bytes, width=%d, height=%d\n", 2 * image_info.m_MCUWidth * image_info.m_MCUHeight, image_info.m_MCUWidth, image_info.m_MCUHeight);
+    printf("allocateMemory pImage=%x\n", pImage);
     if (!pImage) puts("Memory Allocation Failure");  ////
 #endif  ////  ARDUINO
     if (!pImage) return 0;
     memset(pImage , 0 , sizeof(pImage));
     return pImage;
+}
+
+void JPEGDecoder::deallocateMemory() {  ////
+#ifdef ARDUINO  ////
+#else  ////  ARDUINO
+    printf("deallocateMemory pImage=%x\n", pImage);
+    if (!pImage) puts("Memory Allocation Failure");  ////
+#endif  ////  ARDUINO
+    if (pImage == 0) return;
+    delete pImage;
+    pImage = 0;
 }
 
 JPEGDecoder::JPEGDecoder(){
@@ -48,7 +60,8 @@ JPEGDecoder::JPEGDecoder(){
 
 
 JPEGDecoder::~JPEGDecoder(){
-    delete pImage;
+    ////delete pImage;
+    deallocateMemory();  ////
 }
 
 
@@ -80,7 +93,7 @@ unsigned char JPEGDecoder::pjpeg_need_bytes_callback(unsigned char* pBuf, unsign
     else g_pInFile.read(pBuf,n);
 #else
     else fread(pBuf, 1, n, g_pInFile); ////
-    printf("%d\n", n);
+    printf("pjpeg_need_bytes_callback: %d\n", n);
 #endif  ////  ARDUINO
 #endif
     *pBytes_actually_read = (unsigned char)(n);
@@ -96,7 +109,8 @@ int JPEGDecoder::decode_mcu(void){
     {
         is_available = 0 ;
         mcu_y = 0;       // <<<<<< Added to correct 2nd image bug
-        delete pImage;   // <<<<<< Added to correct memory leak bug
+        ////delete pImage;   // <<<<<< Added to correct memory leak bug
+        deallocateMemory();  ////
 #ifdef USE_SD_CARD
 #ifdef ARDUINO  ////
         g_pInFile.close();
@@ -117,7 +131,8 @@ int JPEGDecoder::decode_mcu(void){
 #endif  ////  ARDUINO
             #endif
             
-            delete pImage;
+            ////delete pImage;
+            deallocateMemory();  ////
             return -1;
         }
     }
@@ -134,7 +149,8 @@ int JPEGDecoder::read(void)
 
     if (mcu_y >= image_info.m_MCUSPerCol)
     {
-        delete pImage;
+        ////delete pImage;
+        deallocateMemory();  ////
 #ifdef USE_SD_CARD
 
 #ifdef ARDUINO  ////
@@ -342,7 +358,8 @@ void JPEGDecoder::abort(void){
     mcu_x = 0 ;
     mcu_y = 0 ;
     is_available = 0;
-    delete pImage;
+    ////delete pImage;
+    deallocateMemory();  ////
 #ifdef USE_SD_CARD
 #ifdef ARDUINO  ////
     if (g_pInFile) g_pInFile.close();

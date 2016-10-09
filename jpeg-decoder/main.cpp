@@ -1,3 +1,5 @@
+//  Test program for JPEGDecoder, to be run on desktop.
+#ifndef ARDUINO
 //#include <iostream>
 #include "../JPEGDecoder.h"
 
@@ -28,5 +30,41 @@ int main() {
     printf("%d\n", JpegDec.MCUHeight);
     printf("\n");
 
+    // Output CSV
+    char str[100];
+    sprintf(str,"#SIZE,%d,%d",JpegDec.width,JpegDec.height);
+    puts(str);
+
+    while(JpegDec.read()){
+        uint8 *pImg = (uint8 *) JpegDec.pImage ;
+        if (pImg == 0) break;
+
+        for(int by=0; by<JpegDec.MCUHeight; by++){
+
+            for(int bx=0; bx<JpegDec.MCUWidth; bx++){
+
+                int x = JpegDec.MCUx * JpegDec.MCUWidth + bx;
+                int y = JpegDec.MCUy * JpegDec.MCUHeight + by;
+                //printf("MCU x=%d, y=%d, width=%d, height=%d\n", JpegDec.MCUx, JpegDec.MCUy, JpegDec.MCUWidth, JpegDec.MCUHeight);
+
+                if(x<JpegDec.width && y<JpegDec.height){
+
+                    if(JpegDec.comps == 1){ // Grayscale
+
+                        sprintf(str,"#RGB,%d,%d,%u", x, y, pImg[0]);
+                        //puts(str);
+
+                    }else{ // RGB
+
+                        sprintf(str,"#RGB,%d,%d,%u,%u,%u", x, y, pImg[0], pImg[1], pImg[2]);
+                        //puts(str);
+                    }
+                }
+                pImg += JpegDec.comps ;
+            }
+        }
+    }
+
     return 0;
 }
+#endif  ////  ARDUINO

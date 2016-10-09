@@ -70,6 +70,7 @@ private:
     int decode_mcu(void);
     int decodeCommon(void);
     uint16_t *allocateMemory();  ////
+    void deallocateMemory();  ////
 
 public:
 
