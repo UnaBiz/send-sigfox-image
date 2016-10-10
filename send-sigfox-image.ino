@@ -97,13 +97,13 @@ bool captureImage()
 }
 
 void processImage(int size) {
+#if NOTUSED
     char str[100]; char filename[] = "camera";
     uint8 *pImg; int x,y,bx,by;
         
     //  Decode the JPEG image.
     JpegDec.decode(filename,0);
 
-#if NOTUSED
     //  Show image Information.
     Serial.print("Width     :"); Serial.println(JpegDec.width);
     Serial.print("Height    :"); Serial.println(JpegDec.height);
